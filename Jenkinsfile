@@ -1,15 +1,11 @@
 pipeline {
     agent any
 
-    environment {
-        VENV_DIR = 'venv'
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', 
-                    credentialsId: 'idejongkok',
+                git branch: 'master',
+                    credentialsId: 'github-token',
                     url: 'https://github.com/idejongkok/ko-jenkins-1.git'
             }
         }
@@ -17,9 +13,9 @@ pipeline {
         stage('Setup Python Env') {
             steps {
                 sh '''
-                python3 -m venv ${VENV_DIR}
-                . ${VENV_DIR}/bin/activate
-                python -m pip install --upgrade pip
+                python3 -m venv venv
+                source venv/bin/activate
+                pip install --upgrade pip
                 pip install -r requirements.txt
                 '''
             }
@@ -28,21 +24,17 @@ pipeline {
         stage('Run API Tests') {
             steps {
                 sh '''
-                . ${VENV_DIR}/bin/activate
-                pytest api-automation/tests --alluredir=api-automation/allure-results
+                source venv/bin/activate
+                pytest --alluredir=api-automation/allure-results
                 '''
             }
         }
 
         stage('Publish Allure Report') {
             steps {
-                script {
-                    allure([
-                        includeProperties: false,
-                        jdk: '',
-                        results: [[path: 'api-automation/allure-results']]
-                    ])
-                }
+                allure([
+                    results: [[path: 'api-automation/allure-results']]
+                ])
             }
         }
     }
@@ -50,10 +42,12 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'api-automation/allure-results/**/*.*', fingerprint: true
-            junit 'api-automation/allure-results/**/*.xml'
         }
-        cleanup {
-            sh 'rm -rf ${VENV_DIR}'
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
