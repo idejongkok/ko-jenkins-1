@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        VENV_DIR = 'venv'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -11,8 +15,9 @@ pipeline {
         stage('Setup Python Env') {
             steps {
                 sh '''
-                python3 -m venv venv
-                source venv/bin/activate
+                python3 -m venv ${VENV_DIR}
+                . ${VENV_DIR}/bin/activate
+                python -m pip install --upgrade pip
                 pip install -r requirements.txt
                 '''
             }
@@ -21,17 +26,21 @@ pipeline {
         stage('Run API Tests') {
             steps {
                 sh '''
-                source venv/bin/activate
-                pytest --alluredir=api-automation/allure-results
+                . ${VENV_DIR}/bin/activate
+                pytest api-automation/tests --alluredir=api-automation/allure-results
                 '''
             }
         }
 
         stage('Publish Allure Report') {
             steps {
-                allure([
-                    results: [[path: 'api-automation/allure-results']]
-                ])
+                script {
+                    allure([
+                        includeProperties: false,
+                        jdk: '',
+                        results: [[path: 'api-automation/allure-results']]
+                    ])
+                }
             }
         }
     }
@@ -39,6 +48,10 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'api-automation/allure-results/**/*.*', fingerprint: true
+            junit 'api-automation/allure-results/**/*.xml'
+        }
+        cleanup {
+            sh 'rm -rf ${VENV_DIR}'
         }
     }
 }
