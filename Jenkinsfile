@@ -15,7 +15,7 @@ pipeline {
         stage('Run API Tests') {
             steps {
                 sh '''
-                // . venv/bin/activate
+                . venv/bin/activate
                 pytest --maxfail=1 --disable-warnings -q
                 '''
             }
@@ -28,4 +28,5 @@ pipeline {
         }
     }
 }
+
 
