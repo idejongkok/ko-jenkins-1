@@ -1,76 +1,46 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.11'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
-
-    environment {
-        ALLURE_RESULTS = 'allure-results'
-        ALLURE_REPORT = 'allure-report'
-    }
+    agent any
 
     stages {
-        stage('Checkout') {
+        stage('Clone Repository') {
             steps {
-                dir('api-automation') {
-                    git branch: 'master', url: 'https://github.com/username/api-automation.git'
-                }
+                git branch: 'main', url: 'git@github.com:idejongkok/ko-jenkins-1.git'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Setup Python Env') {
             steps {
-                dir('api-automation') {
-                    sh '''
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
-                    '''
-                }
+                sh '''
+                python3 -m venv venv
+                source venv/bin/activate
+                pip install -r requirements.txt
+                '''
             }
         }
 
-        stage('Run Tests') {
+        stage('Run API Tests') {
             steps {
-                dir('api-automation') {
-                    sh '''
-                    pytest --alluredir=$ALLURE_RESULTS
-                    '''
-                }
-            }
-        }
-
-        stage('Generate Allure Report') {
-            steps {
-                dir('api-automation') {
-                    sh '''
-                    apt-get update && apt-get install -y unzip curl
-                    curl -o allure.zip -L https://github.com/allure-framework/allure2/releases/latest/download/allure-2.29.0.zip
-                    unzip allure.zip -d /opt/
-                    ln -s /opt/allure-2.29.0/bin/allure /usr/bin/allure
-                    allure generate $ALLURE_RESULTS -o $ALLURE_REPORT --clean
-                    '''
-                }
+                sh '''
+                source venv/bin/activate
+                pytest --alluredir=api-automation/allure-results
+                '''
             }
         }
 
         stage('Publish Allure Report') {
             steps {
-                allure includeProperties: false, jdk: '', results: [[path: 'api-automation/allure-results']]
+                allure([
+                    includeProperties: false,
+                    jdk: '',
+                    results: [[path: 'api-automation/allure-results']]
+                ])
             }
         }
     }
 
     post {
         always {
-            archiveArtifacts artifacts: 'api-automation/allure-results/**', allowEmptyArchive: true
-        }
-        failure {
-            echo "Weh testnya gagal — Check Allure Report in Jenkins."
-        }
-        success {
-            echo "Semua test passed!"
+            archiveArtifacts artifacts: 'api-automation/allure-results/**/*.*', fingerprint: true
         }
     }
 }
