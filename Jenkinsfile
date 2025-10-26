@@ -29,7 +29,9 @@ pipeline {
 
         stage('Publish Allure Report') {
             steps {
-                allure 'api-automation/allure-results'
+                allure([
+                    results: [[path: 'api-automation/allure-results']]
+                ])
             }
         }
     }
