@@ -32,9 +32,7 @@ pipeline {
 
         stage('Publish Allure Report') {
             steps {
-                allure([
-                    results: [[path: 'api-automation/allure-results']]
-                ])
+                allure includeProperties: false, jdk: '', results: [[path: 'api-automation/allure-results']]
             }
         }
     }
