@@ -6,7 +6,7 @@ pipeline {
             steps {
                 sh '''
                 python3 -m venv venv
-                source venv/bin/activate
+                . venv/bin/activate
                 pip install -r requirements.txt
                 '''
             }
@@ -15,7 +15,7 @@ pipeline {
         stage('Run API Tests') {
             steps {
                 sh '''
-                source venv/bin/activate
+                . venv/bin/activate
                 pytest --maxfail=1 --disable-warnings -q
                 '''
             }
@@ -24,7 +24,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'api-automation/**/*.log', allowEmptyArchive: true
+            archiveArtifacts artifacts: '**/reports/*.html', allowEmptyArchive: true
         }
     }
 }
