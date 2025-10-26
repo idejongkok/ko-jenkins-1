@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'git@github.com:idejongkok/ko-jenkins-1.git'
+                git branch: 'master', url: 'git@github.com:idejongkok/ko-jenkins-1.git'
             }
         }
 
@@ -26,7 +26,6 @@ pipeline {
                 '''
             }
         }
-        
 
         stage('Publish Allure Report') {
             steps {
@@ -41,4 +40,3 @@ pipeline {
         }
     }
 }
-
