@@ -4,9 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master',
-                    credentialsId: 'github-token',
-                    url: 'https://github.com/idejongkok/ko-jenkins-1.git'
+                git branch: 'master', url: 'https://github.com/idejongkok/ko-jenkins-1.git'
             }
         }
 
@@ -15,7 +13,6 @@ pipeline {
                 sh '''
                 python3 -m venv venv
                 source venv/bin/activate
-                pip install --upgrade pip
                 pip install -r requirements.txt
                 '''
             }
@@ -25,30 +22,15 @@ pipeline {
             steps {
                 sh '''
                 source venv/bin/activate
-                pytest --alluredir=api-automation/allure-results
+                pytest --maxfail=1 --disable-warnings -q
                 '''
-            }
-        }
-
-        stage('Publish Allure Report') {
-            steps {
-                allure([
-                    path: 'api-automation/allure-results'
-                ])
             }
         }
     }
 
     post {
         always {
-            archiveArtifacts artifacts: 'api-automation/allure-results/**/*.*', fingerprint: true
-        }
-        success {
-            echo 'Pipeline completed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed!'
+            archiveArtifacts artifacts: 'api-automation/**/*.log', allowEmptyArchive: true
         }
     }
 }
-
