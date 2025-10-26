@@ -26,14 +26,11 @@ pipeline {
                 '''
             }
         }
+        
 
         stage('Publish Allure Report') {
             steps {
-                allure([
-                    includeProperties: false,
-                    jdk: '',
-                    results: [[path: 'api-automation/allure-results']]
-                ])
+                allure 'api-automation/allure-results'
             }
         }
     }
@@ -44,3 +41,4 @@ pipeline {
         }
     }
 }
+
