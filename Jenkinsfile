@@ -8,7 +8,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', url: 'git@github.com:idejongkok/ko-jenkins-1.git'
+                git branch: 'master', 
+                    credentialsId: 'idejongkok',
+                    url: 'https://github.com/idejongkok/ko-jenkins-1.git'
             }
         }
 
