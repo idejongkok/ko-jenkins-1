@@ -7,17 +7,6 @@ pipeline {
     }
 
     stages {
-        stage('Debug Workspace') {
-            steps {
-                sh '''
-                echo "Current Jenkins workspace:"
-                pwd
-                echo "List workspace contents:"
-                ls -al
-                '''
-            }
-        }
-
         stage('Copy Files to Container') {
             steps {
                 sh '''
@@ -40,26 +29,15 @@ pipeline {
             }
         }
 
-        stage('Run API Tests') {
+        stage('Run Tests') {
             steps {
                 sh '''
                 docker exec ${CONTAINER_NAME} bash -c "
                     cd ${APP_PATH} &&
-                    mkdir -p reports &&
-                    pytest --maxfail=1 --disable-warnings -q --html=reports/report.html
+                    pytest -v
                 "
                 '''
             }
-        }
-    }
-
-    post {
-        always {
-            sh '''
-            echo "Copying reports back to Jenkins..."
-            docker cp ${CONTAINER_NAME}:${APP_PATH}/reports ./reports || true
-            '''
-            archiveArtifacts artifacts: '**/reports/*.html', allowEmptyArchive: true
         }
     }
 }
