@@ -2,12 +2,10 @@ pipeline {
     agent any
 
     stages {
-        stage('Setup Python Env') {
+        stage('Install Dependencies') {
             steps {
                 sh '''
                 docker exec python-runner bash -c "
-                    python3 -m venv /app/venv && \
-                    . /app/venv/bin/activate && \
                     pip install -r /app/requirements.txt
                 "
                 '''
@@ -18,7 +16,6 @@ pipeline {
             steps {
                 sh '''
                 docker exec python-runner bash -c "
-                    . /app/venv/bin/activate && \
                     pytest --maxfail=1 --disable-warnings -q --html=/app/reports/report.html
                 "
                 '''
@@ -28,8 +25,11 @@ pipeline {
 
     post {
         always {
-            sh 'docker cp python-runner:/app/reports ./reports || true'
-            archiveArtifacts artifacts: 'reports/*.html', allowEmptyArchive: true
+            // copy hasil laporan dari container ke Jenkins workspace
+            sh '''
+            docker cp python-runner:/app/reports ./reports || true
+            '''
+            archiveArtifacts artifacts: '**/reports/*.html', allowEmptyArchive: true
         }
     }
 }
