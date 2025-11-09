@@ -1,12 +1,52 @@
 pipeline {
     agent any
 
+    environment {
+        CONTAINER_NAME = 'python-runner'
+        APP_PATH = '/app'
+    }
+
     stages {
-        stage('Run Python Script') {
+        stage('Debug Workspace') {
             steps {
                 sh '''
-                docker exec python-runner bash -c "
-                    pytest
+                echo "Current Jenkins workspace:"
+                pwd
+                echo "List workspace contents:"
+                ls -al
+                '''
+            }
+        }
+
+        stage('Copy Files to Container') {
+            steps {
+                sh '''
+                echo "Copying repository files into container..."
+                docker cp . ${CONTAINER_NAME}:${APP_PATH}
+                docker exec ${CONTAINER_NAME} bash -c "ls -al ${APP_PATH}"
+                '''
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                docker exec ${CONTAINER_NAME} bash -c "
+                    cd ${APP_PATH} &&
+                    pip install --upgrade pip &&
+                    pip install -r requirements.txt
+                "
+                '''
+            }
+        }
+
+        stage('Run API Tests') {
+            steps {
+                sh '''
+                docker exec ${CONTAINER_NAME} bash -c "
+                    cd ${APP_PATH} &&
+                    mkdir -p reports &&
+                    pytest --maxfail=1 --disable-warnings -q --html=reports/report.html
                 "
                 '''
             }
@@ -15,12 +55,11 @@ pipeline {
 
     post {
         always {
-            // optional: ambil report kalau script-nya generate file hasil (misal .html atau .log)
             sh '''
-            docker cp python-runner:/app/reports ./reports || true
+            echo "Copying reports back to Jenkins..."
+            docker cp ${CONTAINER_NAME}:${APP_PATH}/reports ./reports || true
             '''
-            archiveArtifacts artifacts: '**/reports/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: '**/reports/*.html', allowEmptyArchive: true
         }
     }
 }
-
