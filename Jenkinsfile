@@ -6,7 +6,7 @@ pipeline {
             steps {
                 sh '''
                 docker exec python-runner bash -c "
-                    python /app/test_api.py
+                    pytest
                 "
                 '''
             }
@@ -23,3 +23,4 @@ pipeline {
         }
     }
 }
+
