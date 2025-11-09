@@ -6,7 +6,7 @@ pipeline {
             steps {
                 sh '''
                 docker exec python-runner bash -c "
-                    cd '/var/jenkins_home/workspace/API Test' &&
+                    cd '/var/jenkins_home/workspace/API_Test' &&
                     pip install -r requirements.txt
                 "
                 '''
@@ -17,7 +17,7 @@ pipeline {
             steps {
                 sh '''
                 docker exec python-runner bash -c "
-                    cd '/var/jenkins_home/workspace/API Test' &&
+                    cd '/var/jenkins_home/workspace/API_Test' &&
                     pytest -v
                 "
                 '''
@@ -25,3 +25,4 @@ pipeline {
         }
     }
 }
+
