@@ -2,27 +2,34 @@ pipeline {
     agent any
 
     stages {
-        stage('Install Dependencies') {
+        stage('Setup Python Env') {
             steps {
                 sh '''
                 docker exec python-runner bash -c "
-                    cd '/var/jenkins_home/workspace/API_Test' &&
-                    pip install -r requirements.txt
+                    python3 -m venv /app/venv && \
+                    . /app/venv/bin/activate && \
+                    pip install -r /app/requirements.txt
                 "
                 '''
             }
         }
 
-        stage('Run Tests') {
+        stage('Run API Tests') {
             steps {
                 sh '''
                 docker exec python-runner bash -c "
-                    cd '/var/jenkins_home/workspace/API_Test' &&
-                    pytest -v
+                    . /app/venv/bin/activate && \
+                    pytest --maxfail=1 --disable-warnings -q --html=/app/reports/report.html
                 "
                 '''
             }
         }
     }
-}
 
+    post {
+        always {
+            sh 'docker cp python-runner:/app/reports ./reports || true'
+            archiveArtifacts artifacts: 'reports/*.html', allowEmptyArchive: true
+        }
+    }
+}
